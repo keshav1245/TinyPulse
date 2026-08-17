@@ -15,22 +15,17 @@ Configuration options such as Email when a service is down or recently recovered
 5. Other    - Alembic, Plotly
 
 
-## Running the Backend 
+## Development 
+### Running the Stack via Docker 
 
-### Install UV 
-
+From the root folder where we have `docker-compose.dev.yml` file, run the following:
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-### Install the packages
+The backend will be running on `http://localhost:4567`
 
+### Stopping the services 
 ```bash
-cd tiny-pulse-backend
-uv sync
-```
-
-### Run the backend server 
-```bash
-uv run fastapi dev src/main.py
+docker compose -f docker-compose.dev.yml down
 ```

@@ -1,0 +1,6 @@
+services:
+  tiny-pulse-backend:
+    build: 
+      context: ./tiny-pulse-backend
+    ports:
+      - "4567:80"
