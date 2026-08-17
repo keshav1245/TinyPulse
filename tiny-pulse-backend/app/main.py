@@ -11,4 +11,3 @@ def my_home():
 @app.get("/health")
 def health():
     return {"version": _APP_VERSION, "status": "Backend is working fine !"}
-

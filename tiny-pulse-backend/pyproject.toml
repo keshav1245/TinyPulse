@@ -1,7 +1,7 @@
 [project]
 name = "tiny-pulse-backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI backend"
 readme = "README.md"
 authors = [
     { name = "Keshav Tangri", email = "tangri57@gmail.com" }
@@ -12,9 +12,8 @@ dependencies = [
     "pydantic>=2.13.4",
 ]
 
-[project.scripts]
-tiny-pulse-backend = "tiny_pulse_backend:main"
+[tool.uv]
+package = false
 
-[build-system]
-requires = ["uv_build>=0.12.3,<0.13.0"]
-build-backend = "uv_build"
+[tool.fastapi]
+entrypoint = "app.main:app"
