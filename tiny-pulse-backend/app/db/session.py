@@ -1,6 +1,7 @@
 """Centralised Database Connection Management"""
 
 import logging
+import app.models
 from collections.abc import AsyncGenerator
 
 from sqlalchemy import text
