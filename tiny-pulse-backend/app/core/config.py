@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     PORT: int = 4567
 
     # API
-    API_V1_PREFIX = "/api/v1"
+    API_V1_PREFIX: str = "/api/v1"
 
     # Database
 

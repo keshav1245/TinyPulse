@@ -33,7 +33,7 @@ class Database:
             bind=self.engine,
             class_=AsyncSession,
             expire_on_commit=False,
-            autocmmit=False,
+            autocommit=False,
             autoflush=False,
             future=True
         )
@@ -57,7 +57,6 @@ class Database:
 
     async def async_session(self) -> AsyncSession:
         return self.session_maker()
-
 
 def get_database() -> Database:
     if _db is not None:

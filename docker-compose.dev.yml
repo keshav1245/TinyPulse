@@ -49,7 +49,6 @@ secrets:
 networks:
   appnet:
     name: appnet
-    internal: true
 
 volumes:
   pg_data:

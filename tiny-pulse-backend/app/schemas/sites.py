@@ -12,7 +12,9 @@ class SiteCreate(SiteBase):
     """Add a site to db"""
     is_active: bool = Field(default=True)
 
-
+class SiteCreateResponse(SiteCreate):
+    site_id: UUID
+    
 class SiteGETResponse(BaseModel):
 
     """Returning single site from db"""
