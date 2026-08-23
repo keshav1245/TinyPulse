@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.website_service import WebsiteService
 from app.schemas.sites import SiteCreate, SiteResponse
 from app.schemas.health_check import HealthCheckResponse
-from fastapi import APIRouter, status, Depends
+from app.schemas.downtime import DowntimeResponse
+from fastapi import APIRouter, status, Depends, Query
 from app.repositories.website_repository import WebsiteRepository
 from app.repositories.health_check_repository import HealthCheckRepository
 from app.repositories.downtime_repository import DowntimeRepository
@@ -76,3 +77,29 @@ async def check_health(
 ):
     logger.info("[ENDPOINT] Running on-demand health check")
     return await service.check_health(site_id)
+
+
+@router.get(
+    "/{site_id}/health-checks",
+    response_model=list[HealthCheckResponse]
+)
+async def get_health_checks(
+    site_id: UUID,
+    limit: int = Query(default=500, ge=1, le=2000),
+    service: WebsiteService = Depends(get_website_service)
+):
+    logger.info("[ENDPOINT] Fetching health check history")
+    return await service.get_health_checks(site_id, limit=limit)
+
+
+@router.get(
+    "/{site_id}/downtimes",
+    response_model=list[DowntimeResponse]
+)
+async def get_downtimes(
+    site_id: UUID,
+    limit: int = Query(default=500, ge=1, le=2000),
+    service: WebsiteService = Depends(get_website_service)
+):
+    logger.info("[ENDPOINT] Fetching downtime history")
+    return await service.get_downtimes(site_id, limit=limit)

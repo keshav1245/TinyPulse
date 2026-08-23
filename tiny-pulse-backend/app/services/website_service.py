@@ -12,6 +12,7 @@ from app.models.site_registry import Website
 from app.repositories.downtime_repository import DowntimeRepository
 from app.repositories.health_check_repository import HealthCheckRepository
 from app.repositories.website_repository import WebsiteRepository
+from app.schemas.downtime import DowntimeResponse
 from app.schemas.health_check import HealthCheckResponse
 from app.schemas.sites import SiteResponse, SiteCreate
 
@@ -66,13 +67,38 @@ class WebsiteService:
         if site is None:
             raise NotFoundError(f"Site '{site_id}' not found")
 
-        return self._to_response(site)
+        latest_check = await self.health_check_repo.get_latest_for_site(site_id)
+        return self._to_response(site, latest_check)
 
     async def get_all_sites(self) -> list[SiteResponse]:
         logger.info("[SERVICE] Fetching all websites")
 
         sites = await self.repo.get_all()
-        return [self._to_response(site) for site in sites]
+        latest_checks = await self.health_check_repo.get_latest_by_site_ids(
+            [site.site_id for site in sites]
+        )
+
+        return [self._to_response(site, latest_checks.get(site.site_id)) for site in sites]
+
+    async def get_health_checks(self, site_id: UUID, limit: int = 500) -> list[HealthCheckResponse]:
+        logger.info("[SERVICE] Fetching health check history for a website")
+
+        site = await self.repo.get_by_site_id(site_id)
+        if site is None:
+            raise NotFoundError(f"Site '{site_id}' not found")
+
+        checks = await self.health_check_repo.get_all_for_site(site_id, limit=limit)
+        return [HealthCheckResponse.model_validate(check) for check in checks]
+
+    async def get_downtimes(self, site_id: UUID, limit: int = 500) -> list[DowntimeResponse]:
+        logger.info("[SERVICE] Fetching downtime history for a website")
+
+        site = await self.repo.get_by_site_id(site_id)
+        if site is None:
+            raise NotFoundError(f"Site '{site_id}' not found")
+
+        downtimes = await self.downtime_repo.get_all_for_site(site_id, limit=limit)
+        return [self._to_downtime_response(downtime) for downtime in downtimes]
 
     async def check_health(self, site_id: UUID) -> HealthCheckResponse:
         logger.info("[SERVICE] Running on-demand health check")
@@ -124,11 +150,25 @@ class WebsiteService:
             open_downtime.end_time = health_check.date_created
             await self.downtime_repo.update(open_downtime)
 
-    def _to_response(self, site: Website) -> SiteResponse:
+    def _to_response(self, site: Website, latest_check: HealthCheck | None = None) -> SiteResponse:
         return SiteResponse(
             url=site.url,
             name=site.name,
             interval=site.check_interval,
             is_active=site.is_active,
-            site_id=site.site_id
+            site_id=site.site_id,
+            latest_health_check=HealthCheckResponse.model_validate(latest_check) if latest_check else None
+        )
+
+    def _to_downtime_response(self, downtime: Downtime) -> DowntimeResponse:
+        duration_seconds = None
+        if downtime.end_time is not None:
+            duration_seconds = (downtime.end_time - downtime.start_time).total_seconds()
+
+        return DowntimeResponse(
+            id=downtime.id,
+            health_check_id=downtime.health_check_id,
+            start_time=downtime.start_time,
+            end_time=downtime.end_time,
+            duration_seconds=duration_seconds
         )

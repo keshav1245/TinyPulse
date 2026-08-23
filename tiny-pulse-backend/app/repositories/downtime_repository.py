@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,3 +26,26 @@ class DowntimeRepository(BaseRepository[Downtime]):
 
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
+
+    async def get_all_for_site(
+        self,
+        site_id: UUID,
+        limit: int = 500,
+        is_active: bool = True
+    ) -> Sequence[Downtime]:
+        """Fetch the most recent `limit` downtime episodes for a site, oldest first"""
+
+        logger.info("[DOWNTIME_REPO] Fetching downtime history for site")
+        query = (
+            select(Downtime)
+            .join(HealthCheck, Downtime.health_check_id == HealthCheck.id)
+            .where(HealthCheck.site_id == site_id)
+        )
+
+        if is_active:
+            query = query.where(Downtime.is_active.is_(True))
+
+        query = query.order_by(Downtime.start_time.desc()).limit(limit)
+
+        result = await self.db.execute(query)
+        return list(reversed(result.scalars().all()))

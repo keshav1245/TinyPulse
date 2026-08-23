@@ -2,6 +2,8 @@
 from pydantic import BaseModel, Field, HttpUrl
 from uuid import UUID
 
+from app.schemas.health_check import HealthCheckResponse
+
 class SiteBase(BaseModel):
     """Base fields for a site"""
     url: HttpUrl = Field(..., description="Website url entered by user")
@@ -15,3 +17,4 @@ class SiteCreate(SiteBase):
 class SiteResponse(SiteCreate):
     """Full representation of a site, returned by create/get endpoints"""
     site_id: UUID
+    latest_health_check: HealthCheckResponse | None = None
