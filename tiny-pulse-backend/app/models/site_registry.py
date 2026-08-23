@@ -22,7 +22,7 @@ class Website(Base):
         server_default=func.gen_random_uuid()
     )
 
-    url: Mapped[str] = mapped_column(String(256), nullable=False)
+    url: Mapped[str] = mapped_column(String(256), nullable=False, unique=True)
     name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     check_interval: Mapped[int] = mapped_column(Integer, nullable=False, default=180)
 

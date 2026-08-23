@@ -34,3 +34,9 @@ class BaseRepository[ModelType: Base]:
         await self.db.flush()
         await self.db.refresh(db_obj)
         return db_obj
+
+    async def update(self, db_obj: ModelType) -> ModelType:
+        """Persist in-place changes made to an already-tracked entity"""
+        await self.db.flush()
+        await self.db.refresh(db_obj)
+        return db_obj

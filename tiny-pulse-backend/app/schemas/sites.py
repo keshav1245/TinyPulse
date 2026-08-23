@@ -1,5 +1,5 @@
 # Pydantic models are used for API Request validation & Response serialization
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl
 from uuid import UUID
 
 class SiteBase(BaseModel):
@@ -12,14 +12,6 @@ class SiteCreate(SiteBase):
     """Add a site to db"""
     is_active: bool = Field(default=True)
 
-class SiteCreateResponse(SiteCreate):
+class SiteResponse(SiteCreate):
+    """Full representation of a site, returned by create/get endpoints"""
     site_id: UUID
-    
-class SiteGETResponse(BaseModel):
-
-    """Returning single site from db"""
-    model_config = ConfigDict(from_attributes=True)
-
-    site_id: UUID
-    url: HttpUrl
-    name: str

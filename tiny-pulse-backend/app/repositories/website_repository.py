@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,5 +29,12 @@ class WebsiteRepository(BaseRepository[Website]):
         logger.debug("Data fetching query executed successfully, returning data or none")
         return result.scalar_one_or_none()
 
+    async def get_all(self, is_active: bool = True) -> Sequence[Website]:
+        logger.info("[WEBSITE_REPO] Fetching all sites")
+        query = select(Website)
 
-        
+        if is_active:
+            query = query.where(Website.is_active.is_(True))
+
+        result = await self.db.execute(query)
+        return result.scalars().all()
