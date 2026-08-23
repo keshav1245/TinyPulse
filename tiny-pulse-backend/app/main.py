@@ -3,6 +3,7 @@ import logging
 import app.db.session as sess
 from app.db.session import Database
 from app.core.config import settings
+from app.core.exceptions import AppError
 from app.api.v1.router import api_router
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -59,6 +60,22 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     response = JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
+    )
+
+    # Add CORS headers to error responses
+    origin = request.headers.get("origin")
+    if origin and (origin in settings.CORS_ORIGINS or "*" in settings.CORS_ORIGINS):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+
+    return response
+
+@app.exception_handler(AppError)
+async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
+    """Handle domain-level errors and ensure CORS headers are included"""
+    response = JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.message},
     )
 
     # Add CORS headers to error responses
