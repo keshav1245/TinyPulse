@@ -7,6 +7,7 @@ from app.services.website_service import WebsiteService
 from app.schemas.sites import SiteCreate, SiteResponse
 from app.schemas.health_check import HealthCheckResponse
 from app.schemas.downtime import DowntimeResponse
+from app.schemas.stats import SiteDailyStatsResponse
 from fastapi import APIRouter, status, Depends, Query
 from app.repositories.website_repository import WebsiteRepository
 from app.repositories.health_check_repository import HealthCheckRepository
@@ -103,3 +104,16 @@ async def get_downtimes(
 ):
     logger.info("[ENDPOINT] Fetching downtime history")
     return await service.get_downtimes(site_id, limit=limit)
+
+
+@router.get(
+    "/{site_id}/stats",
+    response_model=SiteDailyStatsResponse
+)
+async def get_daily_stats(
+    site_id: UUID,
+    days: int = Query(default=7, ge=1, le=90),
+    service: WebsiteService = Depends(get_website_service)
+):
+    logger.info("[ENDPOINT] Fetching daily stats")
+    return await service.get_daily_stats(site_id, days=days)

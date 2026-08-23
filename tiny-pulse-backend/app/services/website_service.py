@@ -1,4 +1,5 @@
 import logging
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
 import httpx
@@ -15,6 +16,7 @@ from app.repositories.website_repository import WebsiteRepository
 from app.schemas.downtime import DowntimeResponse
 from app.schemas.health_check import HealthCheckResponse
 from app.schemas.sites import SiteResponse, SiteCreate
+from app.schemas.stats import DailyStat, SiteDailyStatsResponse
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +101,61 @@ class WebsiteService:
 
         downtimes = await self.downtime_repo.get_all_for_site(site_id, limit=limit)
         return [self._to_downtime_response(downtime) for downtime in downtimes]
+
+    async def get_daily_stats(self, site_id: UUID, days: int = 7) -> SiteDailyStatsResponse:
+        """Roll up check counts & downtime into one entry per calendar day,
+        covering the last `days` days (including today) with zero-filled gaps"""
+
+        logger.info("[SERVICE] Fetching daily stats for a website")
+
+        site = await self.repo.get_by_site_id(site_id)
+        if site is None:
+            raise NotFoundError(f"Site '{site_id}' not found")
+
+        now = datetime.now(timezone.utc)
+        since = now - timedelta(days=days - 1)
+        since_day = datetime(since.year, since.month, since.day, tzinfo=timezone.utc)
+
+        check_rows = await self.health_check_repo.get_daily_counts(site_id, since_day)
+        downtimes = await self.downtime_repo.get_since_for_site(site_id, since_day)
+
+        buckets: dict[date, dict] = {}
+
+        for row in check_rows:
+            buckets[row.day.date()] = {
+                "total_checks": row.total,
+                "up_checks": row.up_count,
+                "down_checks": row.down_count,
+                "uptime_percentage": round((row.up_count / row.total) * 100, 2) if row.total else None,
+                "downtime_seconds": 0.0,
+                "incident_count": 0,
+            }
+
+        # A downtime is attributed entirely to the day it started on - one that
+        # spans midnight isn't split proportionally across days.
+        for downtime in downtimes:
+            bucket = buckets.setdefault(downtime.start_time.date(), self._empty_daily_bucket())
+            end = downtime.end_time or now
+            bucket["downtime_seconds"] += (end - downtime.start_time).total_seconds()
+            bucket["incident_count"] += 1
+
+        daily_stats = []
+        for offset in range(days):
+            day = (since_day + timedelta(days=offset)).date()
+            daily_stats.append(DailyStat(date=day, **buckets.get(day, self._empty_daily_bucket())))
+
+        return SiteDailyStatsResponse(site_id=site_id, days=days, daily_stats=daily_stats)
+
+    @staticmethod
+    def _empty_daily_bucket() -> dict:
+        return {
+            "total_checks": 0,
+            "up_checks": 0,
+            "down_checks": 0,
+            "uptime_percentage": None,
+            "downtime_seconds": 0.0,
+            "incident_count": 0,
+        }
 
     async def check_health(self, site_id: UUID) -> HealthCheckResponse:
         logger.info("[SERVICE] Running on-demand health check")

@@ -1,9 +1,12 @@
 import logging
 from collections.abc import Sequence
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import case, func, select
+from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.enums import SiteStatus
 from app.models.health_check import HealthCheck
 from app.repositories.base import BaseRepository
 
@@ -70,3 +73,29 @@ class HealthCheckRepository(BaseRepository[HealthCheck]):
 
         result = await self.db.execute(query)
         return list(reversed(result.scalars().all()))
+
+    async def get_daily_counts(
+        self,
+        site_id: UUID,
+        since: datetime,
+        is_active: bool = True
+    ) -> Sequence[Row]:
+        """Count checks per calendar day since a given timestamp, split by UP/DOWN"""
+
+        logger.info("[HEALTH_CHECK_REPO] Fetching daily check counts for site")
+        day_col = func.date_trunc("day", HealthCheck.date_created).label("day")
+
+        query = select(
+            day_col,
+            func.count().label("total"),
+            func.count(case((HealthCheck.site_stat == SiteStatus.UP, 1))).label("up_count"),
+            func.count(case((HealthCheck.site_stat == SiteStatus.DOWN, 1))).label("down_count"),
+        ).where(HealthCheck.site_id == site_id, HealthCheck.date_created >= since)
+
+        if is_active:
+            query = query.where(HealthCheck.is_active.is_(True))
+
+        query = query.group_by(day_col).order_by(day_col)
+
+        result = await self.db.execute(query)
+        return result.all()
