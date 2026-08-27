@@ -16,10 +16,10 @@ export const sitesApi = {
     triggerHealthCheck: (siteId: string) => 
         apiClient.post<HealthCheckResponse>(`/sites/${siteId}/health-check`),
     
-    listHealthChecks: (siteId: string, limit: 100) => 
+    listHealthChecks: (siteId: string, limit: number = 100) => 
         apiClient.get<HealthCheckResponse[]>(`/sites/${siteId}/health-checks?limit=${limit}`),
     
-    listDowntimes: (siteId: string, limit: 100) => 
+    listDowntimes: (siteId: string, limit: number = 100) => 
         apiClient.get<DowntimeResponse[]>(`/sites/${siteId}/downtimes?limit=${limit}`),
     
     getDailyStats: (siteId: string, days: number = 7) =>
