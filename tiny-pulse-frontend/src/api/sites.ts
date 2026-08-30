@@ -7,14 +7,14 @@ import type { SiteDailyStatsResponse } from "../types/stats";
 
 export const sitesApi = {
 
-    list: () => apiClient.get<SiteResponse[]>("/sites"),
+    list: () => apiClient.get<SiteResponse[]>("/sites/"),
 
     get: (siteId: string) => apiClient.get<SiteResponse>(`/sites/${siteId}`),
     
-    create: (data: SiteCreate) => apiClient.post<SiteResponse>("/sites", data),
+    create: (data: SiteCreate) => apiClient.post<SiteResponse>("/sites/", data),
     
     triggerHealthCheck: (siteId: string) => 
-        apiClient.post<HealthCheckResponse>(`/sites/${siteId}/health-check`),
+        apiClient.post<HealthCheckResponse>(`/sites/${siteId}/health-checks`),
     
     listHealthChecks: (siteId: string, limit: number = 100) => 
         apiClient.get<HealthCheckResponse[]>(`/sites/${siteId}/health-checks?limit=${limit}`),
