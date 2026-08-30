@@ -29,6 +29,7 @@ export default function DashboardPage(){
                     <p className="text-slate-500">No sites yet; Register on to start monitoring!</p>
                 )
             }
+            {isError && <p className="text-red-600">{(error as Error).message}</p> }
 
             <div className="space-y-3">
                 {

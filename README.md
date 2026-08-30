@@ -10,8 +10,8 @@ Configuration options such as Email when a service is down or recently recovered
 
 1. Backend  - Python,FastAPI, Celery
 2. Frontend - ReactJS
-3. Database - PostgreSQL, Redis
-4. Deploy   - Docker, Caddy RP
+3. Database - PostgreSQL
+4. Deploy   - Docker, Nginx RP
 5. Other    - Alembic, Plotly
 
 
@@ -24,6 +24,8 @@ docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 The backend will be running on `http://localhost:4567`
+The frontend will be running on `http://localhost:4000`. 
+On Prod FE points to the backend APIs via the Nginx Rev proxy. The docker compose is similar to prod release but we wont be exposing backend ports to host in that case.
 
 ### Stopping the services 
 ```bash
