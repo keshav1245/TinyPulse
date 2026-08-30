@@ -3,3 +3,4 @@
 .env
 secrets/
 pg_data/
+redis_data/
