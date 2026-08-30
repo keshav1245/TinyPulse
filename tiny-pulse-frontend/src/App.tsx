@@ -9,7 +9,7 @@ export default function App(){
 		<Layout>
 			<Routes>
 				<Route path="/" element={<DashboardPage />} />
-				<Route path="/sites/:site_id" element={<SiteDetailPage />} />
+				<Route path="/sites/:siteId" element={<SiteDetailPage />} />
 				<Route path="/*" element={<NotFoundPage />} />
 			</Routes>
 		</Layout>
