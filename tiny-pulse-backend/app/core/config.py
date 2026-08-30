@@ -44,6 +44,17 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str | list[str] = Field(default="http://localhost:4000")
 
+
+    REDIS_URL: str = "redis://redis:6379/0"
+
+    @property
+    def SYNC_DATABASE_URL(self) -> str:
+        return f"postgresql+psycopg2://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    @property
+    def REDBEAT_REDIS_URL(self) -> str:
+        return self.REDIS_URL.rsplit("/", 1)[0] + "/1"
+
     
     @model_validator(mode="before")
     @classmethod
