@@ -2,6 +2,9 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
+import asyncio
+from app.scheduling import schedule_site
+
 import httpx
 from sqlalchemy.exc import IntegrityError
 
@@ -59,6 +62,9 @@ class WebsiteService:
             res = await self.repo.create(website)
         except IntegrityError as e:
             raise ConflictError(f"Site '{site_url}' is already registered") from e
+
+        if res.is_active:
+            await asyncio.to_thread(schedule_site, res.site_id, res.check_interval)
 
         return self._to_response(res)
 

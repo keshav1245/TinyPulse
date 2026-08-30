@@ -1,7 +1,60 @@
 services:
 
+  redis:
+    image: redis:8.2-alpine
+    restart: always
+    command: [ "redis-server", "--appendonly", "yes" ]
+    networks:
+      - appnet
+    volumes:
+      - redis_data:/data
+
+  celery-worker:
+    build:
+      context: ./tiny-pulse-backend
+    command: [ "/app/.venv/bin/celery", "-A", "app.celery_app", "worker", "--loglevel=info" ]
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-tiny-pulse}
+      DB_NAME: ${POSTGRES_DB:-tiny-pulse}
+      DB_POOL_SIZE: 10
+      DB_MAX_OVERFLOW: 20
+      REDIS_URL: redis://redis:6379/0
+    secrets:
+      - db-password
+    networks:
+      - appnet
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  celery-beat:
+    build:
+      context: ./tiny-pulse-backend
+    command: [ "/app/.venv/bin/celery", "-A", "app.celery_app", "beat", "--loglevel=info" ]
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-tiny-pulse}
+      DB_NAME: ${POSTGRES_DB:-tiny-pulse}
+      DB_POOL_SIZE: 10
+      DB_MAX_OVERFLOW: 20
+      REDIS_URL: redis://redis:6379/0
+    secrets:
+      - db-password
+    networks:
+      - appnet
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
   frontend:
-    build: 
+    build:
       context: ./tiny-pulse-frontend
     networks:
       - appnet
@@ -10,9 +63,9 @@ services:
     depends_on:
       - backend
   backend:
-    build: 
+    build:
       context: ./tiny-pulse-backend
-    
+
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -26,7 +79,7 @@ services:
       - appnet
     ports:
       - "4567:80"
-    
+
     depends_on:
       db:
         condition: service_healthy
@@ -46,11 +99,10 @@ services:
     expose:
       - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-default_user} -d $${POSTGRES_DB:-default_db}"]
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-default_user} -d $${POSTGRES_DB:-default_db}" ]
       interval: 5s
       timeout: 5s
       retries: 5
-
 
 secrets:
   db-password:
@@ -62,3 +114,4 @@ networks:
 
 volumes:
   pg_data:
+  redis_data:
