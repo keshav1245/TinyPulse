@@ -44,6 +44,18 @@ async def create_site(
     return await service.create_site(data)
 
 
+@router.delete(
+    "/{site_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_site(
+    site_id: UUID,
+    service: WebsiteService = Depends(get_website_service)
+):
+    logger.info("[ENDPOINT] Deleting a website")
+    await service.delete_site(site_id)
+
+
 @router.get(
     "/",
     response_model=list[SiteResponse]

@@ -12,6 +12,8 @@ export const sitesApi = {
     get: (siteId: string) => apiClient.get<SiteResponse>(`/sites/${siteId}`),
     
     create: (data: SiteCreate) => apiClient.post<SiteResponse>("/sites/", data),
+
+    delete: (siteId: string) => apiClient.delete(`/sites/${siteId}`),
     
     triggerHealthCheck: (siteId: string) => 
         apiClient.post<HealthCheckResponse>(`/sites/${siteId}/health-checks`),

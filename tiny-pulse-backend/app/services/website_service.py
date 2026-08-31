@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
 import asyncio
-from app.scheduling import schedule_site
+from app.scheduling import schedule_site, unschedule_site
 
 import httpx
 from sqlalchemy.exc import IntegrityError
@@ -67,6 +67,16 @@ class WebsiteService:
             await asyncio.to_thread(schedule_site, res.site_id, res.check_interval)
 
         return self._to_response(res)
+
+    async def delete_site(self, site_id: UUID) -> None: 
+        logger.info(f"[SERVICE] Soft Deleting site {site_id}")
+        site = await self.repo.get_by_site_id(site_id)
+
+        if site is None: 
+            raise NotFoundError(f"Site {site_id} not found !")
+
+        await self.repo.soft_delete(site)
+        await asyncio.to_thread(unschedule_site, site.site_id)
 
     async def get_site(self, site_id: UUID) -> SiteResponse:
         logger.info("[SERVICE] Fetching a website by site_id")

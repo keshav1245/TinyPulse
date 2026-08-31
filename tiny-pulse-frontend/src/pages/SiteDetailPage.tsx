@@ -1,11 +1,12 @@
 import { useState } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useNavigate, useParams, Link } from "react-router-dom"
 import { 
     useSite,
     useDailyStas,
     useHealthChecks,
     useDowntimes,
-    useTriggerHealthCheck
+    useTriggerHealthCheck,
+    useDeleteSite,
 } from "../hooks/useSites"
 
 import StatusBadge from "../components/sites/StatusBadge"
@@ -18,6 +19,7 @@ const DAY_OPTIONS = [7, 30, 90];
 export default function SiteDetailPage(){
     
     const { siteId } = useParams<{ siteId: string }>();
+    const navigate = useNavigate();
     const [days, setDays] = useState(7);
 
     const { data: site, isLoading: siteLoading} = useSite(siteId!);
@@ -26,10 +28,16 @@ export default function SiteDetailPage(){
     const { data: downtimes } = useDowntimes(siteId!, 100);
 
     const triggerhealthCheck = useTriggerHealthCheck(siteId!);
+    const deleteSite = useDeleteSite();
 
     if (siteLoading) return <p className="text-slate-500">Loading site...</p>
     if (!site) return <p className="text-red-600">Site not found!</p>
  
+    const handleDelete = () => {
+        if(window.confirm(`Delete "${site.name}"? This can't be undone from the UI.`)){
+            deleteSite.mutate(site.site_id, { onSuccess: () => {navigate("/")}});
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -48,13 +56,23 @@ export default function SiteDetailPage(){
                     <p className="text-sm text-slate-500">{site.url}</p>
                 </div>
 
-                <button onClick={() => triggerhealthCheck.mutate()}
-                    disabled={triggerhealthCheck.isPending}
-                    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm 
-                    font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                <div className="flex gap-2">
+                    <button onClick={() => triggerhealthCheck.mutate()}
+                        disabled={triggerhealthCheck.isPending}
+                        className="rounded-md border border-slate-300 px-3 py-1.5 text-sm 
+                        font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                        >
+                            {triggerhealthCheck.isPending ? "Checking..." : "Check now"}
+                    </button>
+                    <button
+                        onClick={handleDelete}
+                        disabled={deleteSite.isPending}
+                        className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
                     >
-                        {triggerhealthCheck.isPending ? "Checking..." : "Check now"}
-                </button>
+                        {deleteSite.isPending ? "Deleting..." : "Delete"}
+                    </button>
+                </div>
+
             </div>
 
             <div>

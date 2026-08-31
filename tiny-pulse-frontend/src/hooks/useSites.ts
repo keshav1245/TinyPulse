@@ -29,6 +29,16 @@ export function useCreateSite(){
     })
 }
 
+export function useDeleteSite(){
+    const queryclient = useQueryClient();
+    return useMutation({
+        mutationFn: (siteId: string) => sitesApi.delete(siteId),
+        onSuccess: () => {
+            queryclient.invalidateQueries({queryKey: ["sites"]})
+        }
+    })
+}
+
 export function useTriggerHealthCheck(siteId: string){
 
     const queryClient = useQueryClient();
