@@ -77,9 +77,6 @@ services:
       - db-password
     networks:
       - appnet
-    ports:
-      - "4567:80"
-
     depends_on:
       db:
         condition: service_healthy
