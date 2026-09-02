@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 465
     SMTP_USERNAME: str
-    SMTP_PASSWORD: str = Field(alias="google-app-password")
+    SMTP_PASSWORD: str = Field(alias="google-app-pass")
     NOTIFICATION_EMAILS_TO: str | list[str] = Field(default="my_email@gmail.com")
     NOTIFICATION_EMAILS_FROM: str = "TinyPulse Alerts"
 

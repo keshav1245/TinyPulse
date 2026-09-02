@@ -21,6 +21,8 @@ from app.schemas.health_check import HealthCheckResponse
 from app.schemas.sites import SiteResponse, SiteCreate
 from app.schemas.stats import DailyStat, SiteDailyStatsResponse
 
+from app.tasks.notification_task import send_downtime_email, send_uptime_email
+
 logger = logging.getLogger(__name__)
 
 REQUEST_TIMEOUT_SECONDS = 10.0
@@ -191,7 +193,7 @@ class WebsiteService:
             )
         )
 
-        await self._sync_downtime(site.site_id, health_check, site_stat)
+        await self._sync_downtime(site, health_check, site_stat)
 
         return HealthCheckResponse.model_validate(health_check)
 
@@ -210,18 +212,23 @@ class WebsiteService:
 
         return response.status_code, f"Received HTTP {response.status_code}", SiteStatus.DOWN
 
-    async def _sync_downtime(self, site_id: UUID, health_check: HealthCheck, site_stat: SiteStatus) -> None:
+    async def _sync_downtime(self, site: Website, health_check: HealthCheck, site_stat: SiteStatus) -> None:
         """Open a new downtime episode on first failure, close it on recovery"""
 
-        open_downtime = await self.downtime_repo.get_open_for_site(site_id)
+        open_downtime = await self.downtime_repo.get_open_for_site(site.site_id)
 
         if site_stat is SiteStatus.DOWN and open_downtime is None:
             await self.downtime_repo.create(
                 Downtime(health_check_id=health_check.id, start_time=health_check.date_created)
             )
+
+            await asyncio.to_thread(send_downtime_email.delay, site.name or site.url, site.url)
+
         elif site_stat is SiteStatus.UP and open_downtime is not None:
             open_downtime.end_time = health_check.date_created
             await self.downtime_repo.update(open_downtime)
+            duration_seconds = (open_downtime.end_time - open_downtime.start_time).total_seconds()
+            await asyncio.to_thread(send_uptime_email.delay, site.name or site.url, site.url, duration_seconds)
 
     def _to_response(self, site: Website, latest_check: HealthCheck | None = None) -> SiteResponse:
         return SiteResponse(

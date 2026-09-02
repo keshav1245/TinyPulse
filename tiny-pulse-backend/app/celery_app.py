@@ -4,7 +4,7 @@ from app.core.config import settings
 celery_app = Celery(
     "tiny_pulse",
     broker=settings.REDIS_URL,
-    include=["app.tasks.health_check_task"]
+    include=["app.tasks.health_check_task", "app.tasks.notification_task"]
 )
 
 celery_app.conf.update(
