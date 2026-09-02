@@ -55,6 +55,15 @@ class Settings(BaseSettings):
     def REDBEAT_REDIS_URL(self) -> str:
         return self.REDIS_URL.rsplit("/", 1)[0] + "/1"
 
+    # Email notification (Gmail SMTP)
+
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 465
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str = Field(alias="google-app-password")
+    NOTIFICATION_EMAILS_TO: str | list[str] = Field(default="my_email@gmail.com")
+    NOTIFICATION_EMAILS_FROM: str = "TinyPulse Alerts"
+
     
     @model_validator(mode="before")
     @classmethod
@@ -64,6 +73,13 @@ class Settings(BaseSettings):
             cors = values["CORS_ORIGINS"]
             if isinstance(cors, str):
                 values["CORS_ORIGINS"] = [origin.strip() for origin in cors.split(",") if origin.strip()]
+
+        if "NOTIFICATION_EMAILS_TO" in values:
+            emails = values["NOTIFICATION_EMAILS_TO"]
+
+            if isinstance(emails, str):
+                values["NOTIFICATION_EMAILS_TO"] = [e.strip() for e in emails.split(",") if e.strip()]
+
         return values
 
 settings = Settings()
