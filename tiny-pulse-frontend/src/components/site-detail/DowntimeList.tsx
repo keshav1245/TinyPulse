@@ -15,11 +15,13 @@ export default function DowntimeList({ downtimes } : {
         return <p className="text-sm text-slate-500">No downtime recorded.</p>
     }
 
+    const sorted = [...downtimes].reverse();
+
     return (
-        <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200
+        <ul className="max-h-96 divide-y divide-slate-200 overflow-y-auto rounded-lg border border-slate-200
         bg-white shadow-sm">
 
-            {downtimes.map((dt) => (
+            {sorted.map((dt) => (
                 <li key={dt.id} className="flex items-center justify-between px-4 py-2 text-sm">
                     <span className="text-slate-600">{new Date(dt.start_time).toLocaleString()}</span>
                     <span className="font-medium text-red-600">{formatDuration(dt.duration_seconds)}</span>

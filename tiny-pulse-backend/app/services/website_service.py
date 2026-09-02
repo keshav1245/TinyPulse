@@ -49,9 +49,7 @@ class WebsiteService:
     ) -> SiteResponse:
         logger.info("[SERVICE] Registering a Website")
 
-        url = payload.url
-        port_str = f":{url.port}" if url.port else ""
-        site_url: str = f"{url.scheme}://{url.host}{port_str}"
+        site_url = str(payload.url)
 
         website = Website(
             url=site_url,

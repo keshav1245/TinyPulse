@@ -12,11 +12,13 @@ export default function HealthCheckList({ healthChecks }: {
         </p>
     }
 
+    const sorted = [...healthChecks].reverse();
+
     return (
-        <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200
+        <ul className="max-h-96 divide-y divide-slate-200 overflow-y-auto rounded-lg border border-slate-200
         bg-white shadow-sm">
             {
-                healthChecks.map((hc) => (
+                sorted.map((hc) => (
                     <li key={hc.id} className="flex items-center justify-between px-4 py-2 text-sm">
                         <div className="flex items-center gap-2">
                             <StatusBadge status={hc.site_stat} />
